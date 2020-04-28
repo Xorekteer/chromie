@@ -1,3 +1,3 @@
-print("Init called")
+print("Init called: importing CHROMIE")
 
-from chromie.repeater       import Repeater
+from chromie.repeater.repeater       import Repeater

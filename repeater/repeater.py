@@ -1,14 +1,9 @@
-#v0.1
+#v0.3
 
 import time         # sleep()
-import subprocess   # call(), Popen()
+import subprocess   # run(), Popen()
 import json         # dump(), load()
 
-
-"""
-todo:
-Replace subprocess.call() w/ subprocess.run() 
-"""
 
 class Repeater():
     """
@@ -21,36 +16,19 @@ class Repeater():
     cls-->repeat()
     cls-->load_from_json_file()
     cls-->dump_to_json_file() 
-
-    I want it to
-    - start in the background
-    - load processes
-    - if there is a new output on stdout, pull to foreground
-    - hide again on given command
-
-    Linux:
-    Starting:
-    nohup scriptname.ext &
-      ^                  ^
-    no hang up          run linux
-    ignores input       process in
-    and writes output   background
-    to nohup.txt
-
-
     """
 
     # Run in background?
     run_in_background = True
+
+    # Interval between consecutive checks
+    sleep_interval = 20      
 
     # Definitions of time
     chro_minute =   60
     chro_hour   =   60 * chro_minute
     chro_day    =   24 * chro_hour
     chro_week   =    7 * chro_day 
-
-    # Interval between consecutive checks
-    sleep_interval = 20      
 
     # List with all current jobs:
     current_jobs = []
@@ -122,13 +100,19 @@ class Repeater():
                 if time.time() > job.next_call:
                     job.__set_next_call()   # next call set first to minimize time offset   >
                                             # in case of long-running app                   |
-                    # call the script of the job in the background
-                    p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    just_in = p.stdout.readline().decode()  # decode the default byte-string output
-                    if just_in != '':                       # non-empty?
-                        if just_in[-1] == '\n':             # remove EOL from   >
-                            just_in = just_in[:-1]          # non-empty outputs |
-                        subprocess.run('gnome-terminal -- sh -c "echo ' + str(just_in) + ' |less"', shell=True)
+                    # Call in background mode
+                    if Repeater.run_in_background:
+                        p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                        just_in = p.stdout.readline().decode()  # decode the default byte-string output
+                        if just_in != '':                       # non-empty?
+                            if just_in[-1] == '\n':             # remove EOL from   >
+                                just_in = just_in[:-1]          # non-empty outputs |
+                            # open a new terminal window and display the non-empty output in question
+                            subprocess.run('gnome-terminal -- sh -c "echo ' + str(just_in) + ' |less"', shell=True)
+                    # ... 
+                    # Call in foreground mode
+                    else:
+                        subprocess.run(job.__shell_call_string, shell=True)
             time.sleep(cls.sleep_interval)
 
 
@@ -138,8 +122,9 @@ class Repeater():
         self.storage_dict = dict()
         self.storage_dict['next_call']              = self.next_call
         self.storage_dict['delay_dict']             = self.delay_dict
-        self.storage_dict['__shell_call_string']      = self.__shell_call_string
+        self.storage_dict['__shell_call_string']    = self.__shell_call_string
     
+
 
     # Finalizes the json object of the class.
     # Structure:
@@ -169,8 +154,8 @@ class Repeater():
         """ Load jobs from a repfile.json """
         with open("repfile.json", 'r') as file:
             jobs = json.load(file)
-            for job in jobs:
-                newrep = Repeater()
+            for job in jobs:                            # for each job in the json 
+                newrep = Repeater()                     # create a new instance and initialize
                 newrep.next_call   = job['next_call']
                 newrep.delay_dict  = job['delay_dict']
                 newrep.delay_float = ( 
