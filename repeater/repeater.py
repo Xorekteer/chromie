@@ -22,7 +22,7 @@ class Repeater():
     run_in_background = True
 
     # Interval between consecutive checks
-    sleep_interval = 20      
+    sleep_interval = 30      
 
     # Definitions of time
     chro_minute =   60
@@ -35,9 +35,9 @@ class Repeater():
 
     def __init__(self, name="Unnamed", current_jobs=None):
         self.next_call = time.time()   # set first call time to now
-        Repeater.current_jobs.append(self)  # add newly created object to current jobs
+        self.__class__.current_jobs.append(self)  # add newly created object to current jobs
                                             # pass by reference
-        if id(self) != id(Repeater.current_jobs[-1]):    # error cheching
+        if id(self) != id(self.__class__.current_jobs[-1]):    # error cheching
             raise Exception("Repeater instance passed to list of Repeater instances by copying instead of referencing.")
 
 
@@ -96,23 +96,16 @@ class Repeater():
     def repeat(cls, still_waiting=True):
         "Start repeater process."
         while True:
-            for job in Repeater.current_jobs:
+            for job in cls.current_jobs:
                 if time.time() > job.next_call:
                     job.__set_next_call()   # next call set first to minimize time offset   >
                                             # in case of long-running app                   |
-                    # Call in background mode
-                    if Repeater.run_in_background:
-                        p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                        just_in = p.stdout.readline().decode()  # decode the default byte-string output
-                        if just_in != '':                       # non-empty?
-                            if just_in[-1] == '\n':             # remove EOL from   >
-                                just_in = just_in[:-1]          # non-empty outputs |
-                            # open a new terminal window and display the non-empty output in question
-                            subprocess.run('gnome-terminal -- sh -c "echo ' + str(just_in) + ' |less"', shell=True)
-                    # ... 
-                    # Call in foreground mode
-                    else:
-                        subprocess.run(job.__shell_call_string, shell=True)
+                    p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    just_in = p.stdout.read().decode()  # fetch all outputs
+                                                        # note: this will also fetch delayed outputs
+                    # display any non-empty output from the called script in a terminal paging (echo "text"|less) window
+                    if just_in != '':
+                        subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)                        
             time.sleep(cls.sleep_interval)
 
 
@@ -155,25 +148,27 @@ class Repeater():
         with open("repfile.json", 'r') as file:
             jobs = json.load(file)
             for job in jobs:                            # for each job in the json 
-                newrep = Repeater()                     # create a new instance and initialize
+                newrep = cls()                          # create a new instance and initialize
                 newrep.next_call   = job['next_call']
                 newrep.delay_dict  = job['delay_dict']
                 newrep.delay_float = ( 
-                      float( job['delay_dict']['weeks']   )   * Repeater.chro_week
-                    + float( job['delay_dict']['weeks']   )   * Repeater.chro_week
-                    + float( job['delay_dict']['hours']   )   * Repeater.chro_hour
-                    + float( job['delay_dict']['minutes'] )   * Repeater.chro_minute
+                      float( job['delay_dict']['weeks']   )   * cls.chro_week
+                    + float( job['delay_dict']['weeks']   )   * cls.chro_week
+                    + float( job['delay_dict']['hours']   )   * cls.chro_hour
+                    + float( job['delay_dict']['minutes'] )   * cls.chro_minute
                     + float( job['delay_dict']['seconds'] )
                 )
                 newrep.__shell_call_string = job['__shell_call_string']
 
 
 
-def run_repeater():
-    Repeater.load_from_json_file()
-    Repeater.dump_to_json_file()
-    Repeater.repeat()
-
+    @classmethod
+    def run_Repeater(cls):
+        cls.load_from_json_file()
+        cls.dump_to_json_file()
+        cls.repeat()
+            
+    
 
 if __name__ == "__main__":
-    run_repeater()
+    Repeater.run_Repeater()
