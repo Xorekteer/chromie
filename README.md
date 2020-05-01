@@ -17,19 +17,21 @@ Runs in the background and opens a news terminal if the called script writes any
 If the repfile is lost, just create one in an interactive python shell using the class's interface.
 The following command should work:
 
-<code>
-$python3 -i repeater.py
-rep = Repeater()<br>
-rep.set_delay(minutes=1)<br>
-rep.set_shell_call("echo hello")<br>    
-Repeater.dump_to_json_file()<br>  
-</code>
 
-2. Run repeater in the background by calling it from a terminal using the following:
+`$python3 -i repeater.py`   
 
-<code>
-$nohup python3 repeater.py &
-</code>
+`rep = Repeater()`   
+  
+`rep.set_delay(minutes=1)`   
+
+`rep.set_shell_call("echo hello")`   
+
+`Repeater.dump_to_json_file()`   
+
+
+2. Run repeater in the background by calling `repeater_background.sh`:
+
+`$./repeater_background.sh`
 
 You can close the terminal: the process will keep running.
 
@@ -51,4 +53,6 @@ Settings are stored in repfile.json.
 
 #### Technical notes
 
-Currently redirects outputs to a new terminal in paging mode (i.e. using echo OUTPUT|less )
+Currently redirects outputs to a new terminal in paging mode (i.e. using echo OUTPUT|less ).
+If there is no output from the called script, no new window is opened.
+Input to the called script is not possible.
