@@ -53,6 +53,6 @@ Settings are stored in repfile.json.
 
 #### Technical notes
 
-Currently redirects outputs to a new terminal in paging mode (i.e. using echo OUTPUT|less ).
+Currently redirects outputs to a new terminal in paging mode (i.e. using `echo OUTPUT|less`).
 If there is no output from the called script, no new window is opened.
 Input to the called script is not possible.
