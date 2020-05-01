@@ -2,7 +2,7 @@
 
 ## What this library does:
 
-It contains a task scheduler (NOT IMPLEMENTED) and a task repeater (EXPERIMENTAL).
+Contains a task repeater.
 
 ### repeater.py
 #### Summary:
