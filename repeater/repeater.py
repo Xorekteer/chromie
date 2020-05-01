@@ -1,5 +1,3 @@
-#v0.3
-
 import time         # sleep()
 import subprocess   # run(), Popen()
 import json         # dump(), load()
@@ -17,9 +15,6 @@ class Repeater():
     cls-->load_from_json_file()
     cls-->dump_to_json_file() 
     """
-
-    # Run in background?
-    run_in_background = True
 
     # Interval between consecutive checks
     sleep_interval = 30      
@@ -77,8 +72,6 @@ class Repeater():
 
     def set_shell_call(self, call_str):
         """
-        Sets the shell call to be executed upon repetition.
-
         Parameters:
         call_str {string} - The shell command to execute
         """
@@ -99,7 +92,7 @@ class Repeater():
             for job in cls.current_jobs:
                 if time.time() > job.next_call:
                     job.__set_next_call()   # next call set first to minimize time offset   >
-                                            # in case of long-running app                   |
+                                            # in case of long-running script                   |
                     p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     just_in = p.stdout.read().decode()  # fetch all outputs
                                                         # note: this will also fetch delayed outputs
@@ -165,10 +158,9 @@ class Repeater():
     @classmethod
     def run_Repeater(cls):
         cls.load_from_json_file()
-        cls.dump_to_json_file()
         cls.repeat()
-            
-    
+
+
 
 if __name__ == "__main__":
     Repeater.run_Repeater()
