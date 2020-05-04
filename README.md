@@ -38,7 +38,7 @@ Contians a repeater class.
 
 Each repeater object has:
 - A periodicity with which it is called (eg.: every 3 minutes)
-- A shell command which is executed upon call    
+- A shell command which is executed upon call.   
 
 Settings are stored in repfile.json. 
 
@@ -52,6 +52,8 @@ Input to the called script is not possible.
 ### scheduler.py
 
 #### Usage
+
+<em>Always empty the next call string when you copy-paste an instane or modify a job_date!</em>
 
 1. Edit your schfile.json to set up jobs. This should be intuitive (just copy-paste or modify old jobs).
 If the schfile is lost, just create one in an interactive python shell using the class's interface.
@@ -79,8 +81,8 @@ You can close the terminal: the process will keep running.
 Contians a scheduler class.
 
 Each scheduler instance has:
-- A set of times when it should run (eg. every Sunday 19:00)
-- A shell command which is executed upon call    
+- A set of times when it should run (eg.: every Sunday 19:00)
+- A shell command which is executed upon call.   
 
 Settings are stored in repfile.json. 
 
