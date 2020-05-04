@@ -52,9 +52,15 @@ class Scheduler():
         self.dt_next_run = datetime.datetime.now()        # current time
 
         # checking DOW
+        # DOW is special because jumping one day could accidentally jump            >
+        # over a possible time of running: set instead to next day midnight until   >
+        # correct day is found                                                      |
         if "All" not in self.job_dates['dow']:
-            while self.dt_next_run.isoweekday() not in self.job_dates['seconds']:
-                self.dt_next_run += datetime.timedelta(seconds=1)
+            while self.dt_next_run.isoweekday() not in self.job_dates['dow']:
+                # set to today midnight
+                self.dt_next_run = datetime.datetime(self.dt_next_run.year, self.dt_next_run.month, self.dt_next_run.day)
+                # add one day
+                self.dt_next_run += datetime.timedelta(days=1)
 
         # checking SECONDS
         if "All" not in self.job_dates['seconds']:
@@ -68,7 +74,7 @@ class Scheduler():
 
         # checking HOURS
         if "All" not in self.job_dates['hours']:
-            while self.dt_next_run.hour not in self.job_dates['hour']:
+            while self.dt_next_run.hour not in self.job_dates['hours']:
                 self.dt_next_run += datetime.timedelta(hours=1)
 
         # checking DAYS
@@ -203,6 +209,9 @@ You should only see this message if a new job was added.
             instance = cls()
             instance.set_shell_call('echo "hello"')
             instance.set_job_dates(seconds=[0], minutes=[0])
+            # manually empty next run time because we expect user to change job_dates before running, >
+            # risking jumping over a run
+            instance.dt_next_run = ""   
             cls.dump_to_json_file()
 
 
