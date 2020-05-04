@@ -1,7 +1,7 @@
 import time         # sleep()
 import subprocess   # run(), Popen()
 import json         # dump(), load()
-
+import os           # path.exists()
 
 class Repeater():
     """
@@ -112,10 +112,8 @@ class Repeater():
     
 
 
-    # Finalizes the json object of the class.
-    # Structure:
-    # [ job1, job2 ... ]
-    # job_n = {"prop1" : val1, "prop2": val2 ...}
+    # Wraps all objects in a list of dicts   >
+    # Making the entire class JSON-dumpable  |
     @classmethod
     def __get_dumpable_list(cls):
         cls.cls_jsonlist = list()       # list to hold all objects
@@ -153,6 +151,16 @@ class Repeater():
                 )
                 newrep.__shell_call_string = job['__shell_call_string']
 
+
+    @classmethod
+    def create_json_file(cls):
+        if os.path.exists(os.getcwd() + "/repfile.json"):
+            print("JSON exists already.")
+        else:
+            instance = cls()
+            instance.set_shell_call('echo "hello"')
+            instance.set_delay(seconds=30)
+            cls.dump_to_json_file()
 
 
     @classmethod
