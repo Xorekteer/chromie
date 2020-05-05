@@ -3,8 +3,11 @@ import time         # sleep()
 import json         # dump(), load()
 import subprocess   # popen
 import os           # isdir()
+import sys
+sys.path.append("../jsondumpable")
+from jsondumpable import JSONDumpable
 
-class Scheduler():
+class Scheduler(JSONDumpable):
     """Class scheduler.
 
     cls.run()                       -   start process of scheduling
@@ -40,11 +43,7 @@ class Scheduler():
         self.on_missed_call = on_missed_call
         self.job_name = job_name
         self.dt_next_run = datetime.datetime.now()   # set first call time to now
-        self.__class__.current_jobs.append(self)     # add newly created object to list of current jobs
-        # Check passing by reference
-        if id(self) != id(self.__class__.current_jobs[-1]):    # error cheching
-            raise Exception("Scheduler instance passed to list of Scheduler instances by copying instead of referencing.")
-
+        super().__init__()
 
 
     # Sets next run time. Called automatically on set_job_dates(), so user never has to call it
@@ -92,6 +91,9 @@ class Scheduler():
             while self.dt_next_run.year not in self.job_dates['years']:
                 self.dt_next_run += datetime.timedelta(years=1)
 
+        # Serialize for JSON Dumps
+        self.dt_next_run_DUMP = self.dt_next_run.strftime(self.__class__.jsnfrmtstrng_dtnextrun)
+
 
 
     def set_job_dates(self, ISOdow=["All"], seconds=["All"], minutes=["All"], hours=["All"], days=["All"], months=["All"], years=["All"]):
@@ -118,15 +120,6 @@ class Scheduler():
 
 
 
-    def set_shell_call(self, call_str):
-        """
-        Parameters:
-        call_str {string} - The shell command to execute
-        """
-        self.__shell_call_string = call_str
-
-
-
     @classmethod
     def schedule(cls, still_waiting=True):
         "Start scheduler process."
@@ -136,7 +129,7 @@ class Scheduler():
                     job.__set_dt_next_run()   # next call set first to minimize time offset   >
                                               # in case of long-running script                |
                     job.dump_to_json_file()   # Dump next run's time into the json file
-                    p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    p = subprocess.Popen(job.shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     just_in = p.stdout.read().decode()  # fetch all outputs
                                                         # note: this will also fetch delayed outputs
                     # display any non-empty output from the called script in a terminal paging (echo "text"|less) window
@@ -145,34 +138,14 @@ class Scheduler():
             time.sleep(cls.sleep_interval)
 
 
-    # Create dumpale JSON dict for a single object
-    def __create_json_dict(self):
-        self.storage_dict = dict()
-        self.storage_dict['job_name']               = self.job_name
-        self.storage_dict['job_dates']              = self.job_dates
-        self.storage_dict['__shell_call_string']    = self.__shell_call_string
-        self.storage_dict['dt_next_run']            = self.dt_next_run.strftime(self.__class__.jsnfrmtstrng_dtnextrun)
-        self.storage_dict['on_missed_call']         = self.on_missed_call
-
-
-
-    @classmethod
-    def __get_dumpable_list(cls):
-        cls.cls_jsonlist = list()       # list to hold all objects
-        for job in cls.current_jobs:    
-            job.__create_json_dict()                    # create dict for object variables
-            cls.cls_jsonlist.append(job.storage_dict)   # append job to list
-        return cls.cls_jsonlist
-
-
-
-    @classmethod
-    def dump_to_json_file(cls):
-        """ Write all current Repeater jobs to a repfile.json """
-        with open("schfile.json", "w") as file:
-            json.dump(cls.__get_dumpable_list(), file, indent=2)
-
-
+    var_str_list = [
+        'job_name',
+        'job_dates',
+        'shell_call_string',
+        'dt_next_run_DUMP',
+        'on_missed_call'
+        ]
+    dump_file = 'schfile.json'
 
 
     @classmethod
@@ -184,18 +157,25 @@ JSON dt_next_run string had to be reformatted.
 The job was run an next run date is set.
 You should only see this message if a new job was added.                    
 """
-        with open("schfile.json", 'r') as file:
+        with open(cls.dump_file, 'r') as file:
             jobs = json.load(file)
             for job in jobs:                            # for each job in the json 
                 newjob = cls()                          # create a new instance and initialize
-                newjob.job_dates            = job['job_dates']
-                newjob.__shell_call_string  = job['__shell_call_string']
+                newjob.job_dates       = job['job_dates']
+                newjob.job_dates       = job['job_dates']
+                newjob.shell_call_string  = job['shell_call_string']
                 try:
-                    newjob.dt_next_run      = datetime.datetime.strptime(job['dt_next_run'], cls.jsnfrmtstrng_dtnextrun)
+                    newjob.dt_next_run      = datetime.datetime.strptime(
+                        job['dt_next_run_DUMP'],
+                        cls.jsnfrmtstrng_dtnextrun
+                        )
                 # Value of dt_next_run nor according to specification. Rectify and warn.
                 # This is okay if new job was added.
                 except (ValueError, TypeError):
-                    subprocess.run('gnome-terminal -- sh -c "echo \'' + str(nextrun_correction_warning_string) + '\'|less"', shell=True)                        
+                    subprocess.run('gnome-terminal -- sh -c "echo \'' 
+                    + str(nextrun_correction_warning_string) 
+                    + '\'|less"', shell=True)
+                                            
                     newjob.dt_next_run      = datetime.datetime.now()
                 newjob.on_missed_call       = job['on_missed_call']
 
@@ -207,11 +187,11 @@ You should only see this message if a new job was added.
             print("JSON exists already.")
         else:
             instance = cls()
-            instance.set_shell_call('echo "hello"')
+            instance.shell_call_string = 'echo "hello"'
             instance.set_job_dates(seconds=[0], minutes=[0])
             # manually empty next run time because we expect user to change job_dates before running, >
             # risking jumping over a run
-            instance.dt_next_run = ""   
+            instance.dt_next_run_DUMP = ""   
             cls.dump_to_json_file()
 
 

@@ -1,9 +1,12 @@
-import time         # sleep()
-import subprocess   # run(), Popen()
-import json         # dump(), load()
-import os           # path.exists()
+import time             # sleep()
+import subprocess       # run(), Popen()
+import json             # dump(), load()
+import os               # path.exists()
+import sys
+sys.path.append("../jsondumpable")
+from jsondumpable import JSONDumpable
 
-class Repeater():
+class Repeater(JSONDumpable):
     """
     Repeats task periodically.
 
@@ -25,16 +28,9 @@ class Repeater():
     chro_day    =   24 * chro_hour
     chro_week   =    7 * chro_day 
 
-    # List with all current jobs:
-    current_jobs = []
-
     def __init__(self, name="Unnamed", current_jobs=None):
+        super().__init__()
         self.next_call = time.time()   # set first call time to now
-        self.__class__.current_jobs.append(self)  # add newly created object to current jobs
-                                            # pass by reference
-        if id(self) != id(self.__class__.current_jobs[-1]):    # error cheching
-            raise Exception("Repeater instance passed to list of Repeater instances by copying instead of referencing.")
-
 
 
     def set_first_call(self, delay_in_sec=0):
@@ -101,34 +97,8 @@ class Repeater():
                         subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)                        
             time.sleep(cls.sleep_interval)
 
-
-
-    # Crates a json dict for the object
-    def __create_json_dict(self):
-        self.storage_dict = dict()
-        self.storage_dict['next_call']              = self.next_call
-        self.storage_dict['delay_dict']             = self.delay_dict
-        self.storage_dict['__shell_call_string']    = self.__shell_call_string
-    
-
-
-    # Wraps all objects in a list of dicts   >
-    # Making the entire class JSON-dumpable  |
-    @classmethod
-    def __get_dumpable_list(cls):
-        cls.cls_jsonlist = list()       # list to hold all objects
-        for job in cls.current_jobs:    
-            job.__create_json_dict()                    # create dict for object variables
-            cls.cls_jsonlist.append(job.storage_dict)   # append job to list
-        return cls.cls_jsonlist
-
-
-
-    @classmethod
-    def dump_to_json_file(cls):
-        """ Write all current Repeater jobs to a repfile.json """
-        with open("repfile.json", "w") as file:
-            json.dump(cls.__get_dumpable_list(), file, indent=2)
+    var_str_list = ['next_call', 'delay_dict', '_Repeater__shell_call_string']
+    dump_file = 'repfile.json'
 
 
 
@@ -154,13 +124,14 @@ class Repeater():
 
     @classmethod
     def create_json_file(cls):
-        if os.path.exists(os.getcwd() + "/repfile.json"):
-            print("JSON exists already.")
-        else:
-            instance = cls()
-            instance.set_shell_call('echo "hello"')
-            instance.set_delay(seconds=30)
-            cls.dump_to_json_file()
+        #if os.path.exists(os.getcwd() + "/" + cls.dump_file):
+        #    print("JSON exists already.")
+        #else:
+        instance = cls()
+        instance.set_shell_call('echo "hello"')
+        instance.set_delay(seconds=30)
+        print(cls.current_jobs)
+        cls.dump_to_json_file()
 
 
     @classmethod
@@ -171,4 +142,5 @@ class Repeater():
 
 
 if __name__ == "__main__":
-    Repeater.run_Repeater()
+    #Repeater.run_Repeater()
+    Repeater.create_json_file()
