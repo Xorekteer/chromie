@@ -2,9 +2,11 @@ import time             # sleep()
 import subprocess       # run(), Popen()
 import json             # dump(), load()
 import os               # path.exists()
-import sys
+import sys              # path.append()
 sys.path.append("../jsondumpable")
-from jsondumpable import JSONDumpable
+sys.path.append("../notifiers")
+from jsondumpable import JSONDumpable   # superclass
+import mailer
 
 class Repeater(JSONDumpable):
     """
@@ -28,20 +30,13 @@ class Repeater(JSONDumpable):
     chro_day    =   24 * chro_hour
     chro_week   =    7 * chro_day 
 
-    def __init__(self, name="Unnamed", current_jobs=None):
+    # No init arguments since jobs are loaded from a JSON anyway
+    def __init__(self, current_jobs=None):
         super().__init__()
-        self.next_call = time.time()   # set first call time to now
+        self.next_call           = time.time()   # set first call time to now
+        self.name                = "Unnamed"
+        self.notification_method = 'terminal'    # stoud piped to terminal by default
 
-
-    def set_first_call(self, delay_in_sec=0):
-        """
-        Set time of first call relative to now.
-        Not necessary to set before first call. Default delay is 0.
-
-        Kwargs:
-        delay_in_sec {float}
-        """
-        self.next_call = time.time() + delay_in_sec
 
 
 
@@ -65,16 +60,6 @@ class Repeater(JSONDumpable):
         self.delay_float = weeks*self.chro_week + days*self.chro_day + hours*self.chro_minute + seconds
 
 
-
-    def set_shell_call(self, call_str):
-        """
-        Parameters:
-        call_str {string} - The shell command to execute
-        """
-        self.__shell_call_string = call_str
-
-
-
     # Sets next call relative to current time
     def __set_next_call(self):
         self.next_call = time.time() + self.delay_float
@@ -87,26 +72,29 @@ class Repeater(JSONDumpable):
         while True:
             for job in cls.current_jobs:
                 if time.time() > job.next_call:
-                    job.__set_next_call()   # next call set first to minimize time offset   >
-                                            # in case of long-running script                   |
-                    p = subprocess.Popen(job.__shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    p = subprocess.Popen(job.shell_call_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     just_in = p.stdout.read().decode()  # fetch all outputs
                                                         # note: this will also fetch delayed outputs
                     # display any non-empty output from the called script in a terminal paging (echo "text"|less) window
                     if just_in != '':
-                        subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)                        
+                        if job.notification_method == 'terminal':
+                            subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)
+                        elif job.notification_method == 'email-once':
+                            mailer.notify_in_email(just_in)         # send e-mail
+                            job.notification_method = 'terminal'    # further notifications in terminal   
+                    job.__set_next_call()   # set next call
+                    job.dump_to_json_file()
             time.sleep(cls.sleep_interval)
 
-    var_str_list = ['next_call', 'delay_dict', '_Repeater__shell_call_string']
+    # JSONDumpable settings
+    var_str_list = ['name' ,'next_call', 'delay_dict', 'shell_call_string', 'notification_method']
     dump_file = 'repfile.json'
-
-
 
 
     @classmethod
     def load_from_json_file(cls):
         """ Load jobs from a repfile.json """
-        with open("repfile.json", 'r') as file:
+        with open(cls.dump_file, 'r') as file:
             jobs = json.load(file)
             for job in jobs:                            # for each job in the json 
                 newrep = cls()                          # create a new instance and initialize
@@ -119,19 +107,23 @@ class Repeater(JSONDumpable):
                     + float( job['delay_dict']['minutes'] )   * cls.chro_minute
                     + float( job['delay_dict']['seconds'] )
                 )
-                newrep.__shell_call_string = job['__shell_call_string']
-
+                newrep.shell_call_string   = job['shell_call_string']
+                newrep.name                = job['name']
+                newrep.notification_method = job['notification_method']
 
     @classmethod
     def create_json_file(cls):
-        #if os.path.exists(os.getcwd() + "/" + cls.dump_file):
-        #    print("JSON exists already.")
-        #else:
-        instance = cls()
-        instance.set_shell_call('echo "hello"')
-        instance.set_delay(seconds=30)
-        print(cls.current_jobs)
-        cls.dump_to_json_file()
+        """
+        Recreates the JSON file if it doesn't exists.
+        Default job calls 'echo hello' every 30 seconds.
+        """
+        if os.path.exists(os.getcwd() + "/" + cls.dump_file):
+            print("JSON exists already.")
+        else:
+            instance = cls()
+            instance.shell_call_string = 'echo "hello"'
+            instance.set_delay(seconds=30)
+            cls.dump_to_json_file()
 
 
     @classmethod
@@ -142,5 +134,4 @@ class Repeater(JSONDumpable):
 
 
 if __name__ == "__main__":
-    #Repeater.run_Repeater()
-    Repeater.create_json_file()
+    Repeater.run_Repeater()

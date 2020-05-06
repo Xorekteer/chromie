@@ -5,6 +5,17 @@ class JSONDumpable():
     Superclass for JSON Dumpable objects.
     Keeps a list of all instances and some useful 
     functions for serialization.
+
+    Interface:
+    cls.var_str_list {list of strings}  
+        -- Set of variables to be dumped
+            -- SET IN SUBCLASS BEFORE RUNNING
+            -- error if not set
+    cls.dump_file 
+        -- Filename of file to be dumpled
+            -- SET IN SUBCLASS BEFORE RUNNING
+    cls.dump_to_json_file()
+        -- Dump file
     """
     
     # Initialize list w/ current jobs
@@ -30,7 +41,7 @@ class JSONDumpable():
     # Create dumpale JSON dict for a single object
     def __create_json_dict(self):
         self.storage_dict = dict()
-        for var_str in self.__class__.var_str_list:
+        for var_str in self.__class__.var_str_list:     # ignore this error, it's intended
             exec("self.storage_dict['" + var_str + "'] = self." + var_str)
 
 
