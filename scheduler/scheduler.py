@@ -12,20 +12,41 @@ import mailer
 
 
 class Scheduler(JSONDumpable):
-    """Class scheduler.
+    """
+    Schedules tasks.
+    Notifies iff there is any output (can run in background).
 
-    cls.run()                       -   start process of scheduling
-    cls.load_from_json_file(...)
-    cls.dump_to_json_file(...)
-    cls.sleep_interval              -   sleep interval between task checks    
-    cls.current_jobs                -   all current jobs in the class
-    cls.keywordlist                 -   all string keys of obj.job_dates and obj.job_m_dates in a list
-    cls.schedule()
+    Tunable Class Variables:
+        cls.sleep_interval       - sleep interval between checks
+        JSONDUMPABLE.dump_file   - name of json file
 
-    obj.dt_next_run
-    obj.job_dates           -   human readable scheduling dates
-    obj.set_job_dates(...)  -   set job dates manually
-    obj.__set_dt_next_run() 
+    Tunable Instance Variables (set them in the JSON file):
+        obj.name                 - identifier, can be anything
+        obj.job_dates
+        obj.notification_method  - notification method
+        obj.shell_call_sting     - shell call to be executed upon repetition
+            options:
+                'terminal'   -- prints any stdout to a gnome terminal
+                'email-once' -- send an email once using mailer.py(TEMPLATE)
+                             >> then set to 'terminal'
+    
+    Other Class Variables:
+        JSONDUMPABLE.var_str_list  - {list of strings} list of variables to be dumped
+
+    Interface:
+        cls.create_json_file()  
+            - creates JSON file if not present
+            - use in INTERACTIVE MODE
+    
+    Debugging interface (Use JSON file instead):
+    obj --> set_job_dates(...)
+    cls --> schedule()
+    cls --> load_from_json_file()
+    cls --> run_Scheduler()
+        - Main
+        - Load from JSON and repeat
+    JSONDUMPABLE --> dump_to_json_file()
+    
     """
 
 
@@ -161,6 +182,8 @@ class Scheduler(JSONDumpable):
     dump_file = 'schfile.json'
 
 
+    # Validators for loading from JSON
+    valid_notification_methods  = ['terminal', 'email-once']     # valid notification methods
     @classmethod
     def load_from_json_file(cls):
         """ Load jobs from an schfile.json """
@@ -174,10 +197,12 @@ You should only see this message if a new job was added.
             jobs = json.load(file)
             for job in jobs:                            # for each job in the json 
                 newjob = cls()                          # create a new instance and initialize
+                newjob.job_name            = job['job_name']
                 newjob.job_dates           = job['job_dates']
                 newjob.shell_call_string   = job['shell_call_string']
                 newjob.on_missed_call      = job['on_missed_call']
                 newjob.notification_method = job['notification_method']
+                
                 # Try parsing next run time
                 try:
                     newjob.dt_next_run    = datetime.datetime.strptime(
@@ -192,6 +217,13 @@ You should only see this message if a new job was added.
                     + '\'|less"', shell=True)
                                             
                     newjob.__set_dt_next_run()    # reset next run time
+                
+                # Validation
+                if newjob.notification_method not in cls.valid_notification_methods:
+                    subprocess.run('gnome-terminal -- sh -c "echo \'' 
+                    + 'Invalid notification method of job ' + newjob.job_name 
+                    + '\'|less"', shell=True)
+                    raise ValueError("Invalid notification method in JSON")
 
 
 

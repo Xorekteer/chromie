@@ -4,8 +4,9 @@
 import smtplib, ssl
 
 def notify_in_email(text):
-    """Send a mail.
-       Subject is AutoNotification
+    """Sends a mail through gmail. 
+    
+    TEMPLATE SCRIPT: edit all CAPITAL_NAMES to make it work. 
 
     Arguments:
         text {string} -- plain text body of the email

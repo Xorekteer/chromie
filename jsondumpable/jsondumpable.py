@@ -9,11 +9,11 @@ class JSONDumpable():
     Interface:
     cls.var_str_list {list of strings}  
         -- Set of variables to be dumped
-            -- SET IN SUBCLASS BEFORE RUNNING
-            -- error if not set
+            -- SUBCLASS VARIABLE: Set in subclass before running
+            -- no default, error if not set
     cls.dump_file 
         -- Filename of file to be dumpled
-            -- SET IN SUBCLASS BEFORE RUNNING
+            -- SUBCLASS VARIABLE: Set in subclass before running
     cls.dump_to_json_file()
         -- Dump file
     """

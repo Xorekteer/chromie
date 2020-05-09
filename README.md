@@ -4,8 +4,13 @@
 
 Contains a task repeater and a task scheduler. The repeater executes shell calls periodically (e.g. every x hours and y minutes), the scheduler does the same on given times (e.g. every day at 18:00).
 
-These scripts run in the background and open a news terminal if the called script writes anything to the standard output.
-Read the usage guide below. The classes were designed with similar interfaces, so the guides are almost identical.
+These scripts run in the background and open a new terminal if the called script writes anything to the standard output (in JSON file set `notification_method='terminal'`).
+
+There is also an option to send an email once and print the rest of the message in a new terminal window (in JSON file `notification_method='email-once'`).
+
+To use the email functionality, first modify the template script `mailer.py`.
+
+Otherwise read the usage guide below. The classes were designed with similar structure, so the guides are almost identical.
 
 ### repeater.py
 
