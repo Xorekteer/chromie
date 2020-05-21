@@ -105,9 +105,11 @@ class Repeater(JSONDumpable):
                     if just_in != '':
                         if job.notification_method == 'terminal':
                             subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)
-                        elif job.notification_method == 'email-once':
-                            mailer.notify_in_email(just_in)         # send e-mail
-                            job.notification_method = 'terminal'    # further notifications in terminal   
+                        elif job.notification_method == 'email-once':   # email-once?   >
+                            mailer.notify_in_email(just_in)             # send e-mail   >
+                            job.notification_method = 'terminal'        # further notifications in terminal |
+                        elif job.notification_method == 'email-only':   # email-onlu?   >
+                            mailer.notify_in_email(just_in)             # send e-mail
                     job.__set_next_call()   # set next call
                     job.dump_to_json_file()
             time.sleep(cls.sleep_interval)
@@ -118,7 +120,7 @@ class Repeater(JSONDumpable):
 
 
     # Validators for loading from JSON
-    valid_notification_methods  = ['terminal', 'email-once']     # valid notification methods
+    valid_notification_methods  = ['terminal', 'email-once', 'email-only']     # valid notification methods
     @classmethod
     def load_from_json_file(cls):
         """ Load jobs from a repfile.json """
