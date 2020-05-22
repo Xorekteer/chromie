@@ -1,5 +1,7 @@
 # Chromie -- A python based task scheduler
 
+**Note:** this utility was built for Ubuntu, and requires gnome terminal to print messages. On other linux distros, set up `mailer.py` and use `email-only` notification method.
+
 ## What this library does:
 
 Contains a task repeater and a task scheduler. The repeater executes shell calls periodically (e.g. every x hours and y minutes), the scheduler does the same on given times (e.g. every day at 18:00).
@@ -7,6 +9,9 @@ Contains a task repeater and a task scheduler. The repeater executes shell calls
 These scripts run in the background and open a new terminal if the called script writes anything to the standard output (in JSON file set `notification_method='terminal'`).
 
 There is also an option to send an email once and print the rest of the message in a new terminal window (in JSON file `notification_method='email-once'`).
+
+
+Finally it's possible to get notifications in e-mail only. **On Linux distros without gnome-terminal, only this options works.** (in JSON file `notification_method='email-only'`).
 
 To use the email functionality, first modify the template script `mailer.py`.
 
