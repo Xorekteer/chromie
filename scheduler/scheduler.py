@@ -1,14 +1,23 @@
-import time  # sleep()
-import datetime  # datetime.now()
-import json  # dump(), load()
-import os  # isdir()
-import subprocess  # popen
+import time         # sleep()
+import datetime     # datetime.now()
+import json         # dump(), load()
+import os           # isdir()
+import subprocess   # Popen()
+import sys          # path.append()
 
-import sys
-sys.path.append("../jsondumpable")
+# External dependencies:
+# Load from ..chromie/dep.txt:
+with open("../dep.txt", 'r') as dep_file:
+    deplist = list(line for line in dep_file.readlines())
+for dep in deplist:
+    if dep[-1] == "\n":
+        dep = dep[:-1]
+    sys.path.append(dep)
+from jsondumpable.jsondumpable import JSONDumpable   # superclass
+
+# Internal dependencies
 sys.path.append("../notifiers")
-from jsondumpable import JSONDumpable  # superclass
-import mailer
+import mailer # notify_by_email()
 
 
 class Scheduler(JSONDumpable):
@@ -78,12 +87,12 @@ class Scheduler(JSONDumpable):
         self.dt_next_run = datetime.datetime.now()        # current time
 
         # checking DOW
-        # DOW is special because jumping one day could accidentally jump            >
-        # over a possible time of running: set instead to next day midnight until   >
-        # correct day is found                                                      |
+        # DOW is special because jumping one day could accidentally jump                    >
+        # over a possible time of running: set instead to next day midnight until           >
+        # correct day is found (while loop skipped entirely if all or current day present)  |
         if "All" not in self.job_dates['dow']:
             while self.dt_next_run.isoweekday() not in self.job_dates['dow']:
-                # set to today midnight
+                # set to current day midnight
                 self.dt_next_run = datetime.datetime(self.dt_next_run.year, self.dt_next_run.month, self.dt_next_run.day)
                 # add one day
                 self.dt_next_run += datetime.timedelta(days=1)
@@ -164,7 +173,7 @@ class Scheduler(JSONDumpable):
                         if job.notification_method == 'terminal':
                             subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)
                         elif job.notification_method == 'email-once':
-                            mailer.notify_in_email(just_in)         # send e-mail
+                            mailer.notify_by_email(just_in)         # send e-mail
                             job.notification_method = 'terminal'    # further notifications in terminal                       
                     job.__set_dt_next_run()   # set next call time
                     job.dump_to_json_file()   # Dump job to JSON
@@ -190,8 +199,8 @@ class Scheduler(JSONDumpable):
 
         nextrun_correction_warning_string = """\
 JSON dt_next_run string had to be reformatted. 
-The job was run an next run date is set.
-You should only see this message if a new job was added.                    
+Next run date is set.
+You should only see this message if a new job was added or if a job hasn't run since last reformatting.                    
 """
         with open(cls.dump_file, 'r') as file:
             jobs = json.load(file)

@@ -3,10 +3,20 @@ import subprocess       # run(), Popen()
 import json             # dump(), load()
 import os               # path.exists()
 import sys              # path.append()
-sys.path.append("../jsondumpable")
+
+# External dependencies:
+# Load from ..chromie/dep.txt:
+with open("../dep.txt", 'r') as dep_file:
+    deplist = list(line for line in dep_file.readlines())
+for dep in deplist:
+    if dep[-1] == "\n":
+        dep = dep[:-1]
+    sys.path.append(dep)
+from jsondumpable.jsondumpable import JSONDumpable   # superclass
+
+# Internal dependencies
 sys.path.append("../notifiers")
-from jsondumpable import JSONDumpable   # superclass
-import mailer
+import mailer # notify_by_email()
 
 class Repeater(JSONDumpable):
     """
@@ -106,10 +116,10 @@ class Repeater(JSONDumpable):
                         if job.notification_method == 'terminal':
                             subprocess.run('gnome-terminal -- sh -c "echo \'' + str(just_in) + '\'|less"', shell=True)
                         elif job.notification_method == 'email-once':   # email-once?   >
-                            mailer.notify_in_email(just_in)             # send e-mail   >
+                            mailer.notify_by_email(just_in)             # send e-mail   >
                             job.notification_method = 'terminal'        # further notifications in terminal |
                         elif job.notification_method == 'email-only':   # email-onlu?   >
-                            mailer.notify_in_email(just_in)             # send e-mail
+                            mailer.notify_by_email(just_in)             # send e-mail
                     job.__set_next_call()   # set next call
                     job.dump_to_json_file()
             time.sleep(cls.sleep_interval)

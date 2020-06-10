@@ -13,9 +13,16 @@ There is also an option to send an email once and print the rest of the message 
 
 Finally it's possible to get notifications in e-mail only. **On Linux distros without gnome-terminal, only this options works.** (in JSON file `notification_method='email-only'`).
 
-To use the email functionality, first modify the template script `mailer.py`.
 
 Otherwise read the usage guide below. The classes were designed with similar structure, so the guides are almost identical.
+
+## General Setup
+Dependencies should be included by adding a path to `dep.txt`, pointing at a folder with library `jsondumpable` inside.
+You can clone `jsondumpbale` from [https://github.com/Xorekteer/jsondumpable](https://github.com/Xorekteer/jsondumpable)
+
+
+To use the email functionality, first modify the template script `mailer.py`.
+
 
 ### repeater.py
 
