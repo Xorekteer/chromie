@@ -1,0 +1,35 @@
+[
+  {
+    "job_name": "Unnamed",
+    "job_dates": {
+      "dow": [
+        "All"
+      ],
+      "seconds": [
+        0,
+        15,
+        30,
+        45
+      ],
+      "minutes": [
+        "All"
+      ],
+      "hours": [
+        "All"
+      ],
+      "days": [
+        "All"
+      ],
+      "months": [
+        "All"
+      ],
+      "years": [
+        "All"
+      ]
+    },
+    "shell_call_string": "echo \"hello\"",
+    "dt_next_run_DUMP": "2021 01 02 Saturday 02:13:45.183861 Timezone: NA DoY: 002 WoY: 00",
+    "on_missed_call": "Not implemented.",
+    "notification_method": "terminal"
+  }
+]

@@ -6,13 +6,8 @@ import subprocess   # Popen()
 import sys          # path.append()
 
 # External dependencies:
-# Load from ..chromie/dep.txt:
-with open("../dep.txt", 'r') as dep_file:
-    deplist = list(line for line in dep_file.readlines())
-for dep in deplist:
-    if dep[-1] == "\n":
-        dep = dep[:-1]
-    sys.path.append(dep)
+sys.path.append("..")
+import x_foxport
 from jsondumpable.jsondumpable import JSONDumpable   # superclass
 
 # Internal dependencies

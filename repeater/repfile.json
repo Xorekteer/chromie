@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Unnamed",
+    "next_call": 1609549732.6615899,
+    "delay_dict": {
+      "seconds": 30,
+      "minutes": 0,
+      "hours": 0,
+      "days": 0,
+      "weeks": 0
+    },
+    "shell_call_string": "echo \"hello\"",
+    "notification_method": "terminal"
+  }
+]
